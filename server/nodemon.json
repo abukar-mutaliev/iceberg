@@ -1,0 +1,11 @@
+{
+  "verbose": true,
+  "ignore": ["*.test.js", "*.spec.js", ".git", "logs/*", "node_modules"],
+  "events": {
+    "restart": "kill-port 3000",
+    "crash": "kill-port 3000"
+  },
+  "env": {
+    "NODE_ENV": "development"
+  }
+}

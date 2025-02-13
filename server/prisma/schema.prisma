@@ -1,0 +1,396 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model InvalidToken {
+  id        Int      @id @default(autoincrement())
+  token     String   @unique
+  userId    Int
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model RefreshToken {
+  id         Int      @id @default(autoincrement())
+  token      String   @unique
+  userId     Int
+  deviceInfo String?
+  isValid    Boolean  @default(true)
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model TrustedDevice {
+  id        Int      @id @default(autoincrement())
+  deviceId  String   @unique
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+}
+
+model BackupCode {
+  id        Int      @id @default(autoincrement())
+  code      String   @unique
+  userId    Int
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model User {
+  id                Int                @id @default(autoincrement())
+  email             String             @unique
+  password          String
+  avatar            String?
+  role              UserRole
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  admin             Admin?             @relation("UserToAdmin")
+  client            Client?
+  employee          Employee?
+  supplier          Supplier?
+  driver            Driver?
+  invalidTokens     InvalidToken[]
+  refreshTokens     RefreshToken[]
+  trustedDevices    TrustedDevice[]
+  backupCodes       BackupCode[]
+  staffApplications StaffApplication[]
+  twoFactorEnabled Boolean @default(false)
+  twoFactorSecret String?
+}
+
+model Admin {
+  id           Int      @id @default(autoincrement())
+  userId       Int      @unique
+  name         String
+  phone        String?
+  address      String?
+  createdAt    DateTime @default(now())
+  isSuperAdmin Boolean  @default(false)
+  user         User     @relation("UserToAdmin", fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Client {
+  id            Int             @id @default(autoincrement())
+  userId        Int             @unique
+  name          String
+  phone         String?
+  address       String?
+  districtId    Int?
+  district      District?       @relation("ClientDistricts", fields: [districtId], references: [id])
+  user          User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  feedback      Feedback[]
+  orders        Order[]
+  preferences   UserPreference?
+  notifications Notification[]
+
+  @@index([districtId])
+}
+
+model Employee {
+  id        Int        @id @default(autoincrement())
+  userId    Int        @unique
+  name      String
+  position  String?
+  phone     String?
+  address   String?
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages  Message[]
+  tasks     Task[]
+  workTimes WorkTime[]
+}
+
+model Supplier {
+  id            Int       @id @default(autoincrement())
+  userId        Int       @unique
+  companyName   String
+  contactPerson String
+  phone         String?
+  address       String?
+  inn           String?   @unique
+  ogrn          String?   @unique
+  bankAccount   String?
+  bik           String?
+  products      Product[]
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  supplies      Supply[]
+
+  @@index([inn])
+  @@index([ogrn])
+}
+
+model Driver {
+  id          Int        @id @default(autoincrement())
+  userId      Int        @unique
+  name        String
+  phone       String?
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  districts   District[] @relation("DriverDistricts")
+  stops       Stop[]
+  address     String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
+model District {
+  id          Int        @id @default(autoincrement())
+  name        String     @unique
+  description String?
+  drivers     Driver[]   @relation("DriverDistricts")
+  clients     Client[]   @relation("ClientDistricts")
+  stops       Stop[]
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
+model Stop {
+  id           Int       @id @default(autoincrement())
+  driverId     Int
+  districtId   Int
+  address      String
+  photo        String?
+  mapLocation  String
+  stopTime     DateTime
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  driver       Driver    @relation(fields: [driverId], references: [id], onDelete: Cascade)
+  district     District  @relation(fields: [districtId], references: [id])
+
+  @@index([driverId])
+  @@index([districtId])
+  @@index([stopTime])
+}
+
+model UserPreference {
+  id       Int    @id @default(autoincrement())
+  userId   Int    @unique
+  keywords String[]
+  user     Client @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Notification {
+  id        Int              @id @default(autoincrement())
+  userId    Int
+  title     String
+  content   String
+  type      NotificationType
+  isRead    Boolean         @default(false)
+  createdAt DateTime        @default(now())
+  user      Client          @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+enum NotificationType {
+  ORDER_STATUS
+  PROMOTION
+  TASK
+  SUPPLY
+  SYSTEM
+  SECURITY_ALERT
+}
+
+model StaffApplication {
+  id          Int               @id @default(autoincrement())
+  userId      Int
+  desiredRole ApplicationRole
+  districts   String?
+  status      ApplicationStatus @default(PENDING)
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+enum ApplicationRole {
+  EMPLOYEE
+  SUPPLIER
+  DRIVER
+}
+
+enum ApplicationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model Order {
+  id            Int                  @id @default(autoincrement())
+  clientId      Int
+  status        OrderStatus
+  totalAmount   Float
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+  cancelReason  String?
+  comment       String?
+  orderNumber   String               @unique
+  feedback      Feedback?
+  client        Client               @relation(fields: [clientId], references: [id])
+  orderItems    OrderItem[]
+  statusHistory OrderStatusHistory[]
+  payment       Payment?
+  deliveryAddress String?
+  expectedDeliveryDate DateTime?
+}
+
+model OrderStatusHistory {
+  id        Int         @id @default(autoincrement())
+  orderId   Int
+  status    OrderStatus
+  comment   String?
+  createdAt DateTime    @default(now())
+  order     Order       @relation(fields: [orderId], references: [id])
+}
+
+model OrderItem {
+  id        Int     @id @default(autoincrement())
+  orderId   Int
+  productId Int
+  quantity  Int
+  price     Float
+  order     Order   @relation(fields: [orderId], references: [id])
+  product   Product @relation(fields: [productId], references: [id])
+}
+
+model Category {
+  id          Int       @id @default(autoincrement())
+  name        String    @unique
+  slug        String    @unique
+  description String?
+  products    Product[] @relation("ProductCategories")
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Product {
+  id            Int         @id @default(autoincrement())
+  supplierId    Int?
+  name          String
+  description   String?
+  price         Float
+  stockQuantity Int
+  status        String?
+  orderItems    OrderItem[]
+  supplier      Supplier?   @relation(fields: [supplierId], references: [id])
+  supplies      Supply[]
+  categories    Category[] @relation("ProductCategories")
+  images        String[]
+  isActive      Boolean     @default(true)
+  feedbacks     Feedback[]
+}
+
+model Payment {
+  id            Int           @id @default(autoincrement())
+  orderId       Int           @unique
+  amount        Float
+  status        PaymentStatus
+  paymentMethod String
+  createdAt     DateTime      @default(now())
+  order         Order         @relation(fields: [orderId], references: [id])
+}
+
+model Feedback {
+  id        Int      @id @default(autoincrement())
+  clientId  Int
+  productId Int?
+  orderId   Int?     @unique
+  rating    Int
+  comment   String?
+  createdAt DateTime @default(now())
+
+  client    Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  product   Product? @relation(fields: [productId], references: [id], onDelete: Cascade)
+  order     Order?   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+}
+
+model WorkTime {
+  id         Int       @id @default(autoincrement())
+  employeeId Int
+  startTime  DateTime
+  endTime    DateTime?
+  date       DateTime  @default(now())
+  employee   Employee  @relation(fields: [employeeId], references: [id])
+}
+
+model Task {
+  id          Int        @id @default(autoincrement())
+  employeeId  Int
+  title       String
+  description String?
+  status      TaskStatus
+  priority    Priority
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  dueDate     DateTime?
+  employee    Employee   @relation(fields: [employeeId], references: [id])
+}
+
+model Supply {
+  id           Int          @id @default(autoincrement())
+  supplierId   Int
+  productId    Int
+  quantity     Int
+  status       SupplyStatus
+  deliveryDate DateTime?
+  createdAt    DateTime     @default(now())
+  product      Product      @relation(fields: [productId], references: [id])
+  supplier     Supplier     @relation(fields: [supplierId], references: [id])
+}
+
+model Message {
+  id         Int      @id @default(autoincrement())
+  employeeId Int
+  content    String
+  createdAt  DateTime @default(now())
+  employee   Employee @relation(fields: [employeeId], references: [id])
+}
+
+enum UserRole {
+  CLIENT
+  EMPLOYEE
+  SUPPLIER
+  ADMIN
+  DRIVER
+}
+
+enum OrderStatus {
+  PENDING
+  PROCESSING
+  DELIVERED
+  CANCELLED
+  CONFIRMED
+  IN_DELIVERY
+  REFUNDED
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum SupplyStatus {
+  PENDING
+  IN_TRANSIT
+  DELIVERED
+  CANCELLED
+}

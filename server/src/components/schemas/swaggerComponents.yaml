@@ -1,0 +1,714 @@
+components:
+  schemas:
+    Admin:
+      type: object
+      properties:
+        id:
+          type: integer
+        email:
+          type: string
+          format: email
+        role:
+          type: string
+          enum: [ADMIN]
+        admin:
+          type: object
+          properties:
+            name:
+              type: string
+            phone:
+              type: string
+            address:
+              type: string
+            isSuperAdmin:
+              type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    Employee:
+      type: object
+      properties:
+        id:
+          type: integer
+        email:
+          type: string
+          format: email
+        role:
+          type: string
+          enum: [EMPLOYEE]
+        employee:
+          type: object
+          properties:
+            name:
+              type: string
+            phone:
+              type: string
+            position:
+              type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    Supplier:
+      type: object
+      properties:
+        id:
+          type: integer
+        email:
+          type: string
+          format: email
+        role:
+          type: string
+          enum: [SUPPLIER]
+        supplier:
+          type: object
+          properties:
+            companyName:
+              type: string
+            contactPerson:
+              type: string
+            phone:
+              type: string
+            address:
+              type: string
+            inn:
+              type: string
+              description: ИНН компании
+              pattern: ^\d{10}$|^\d{12}$
+            ogrn:
+              type: string
+              description: ОГРН компании
+              pattern: ^\d{13}$|^\d{15}$
+            bankAccount:
+              type: string
+              description: Расчетный счет
+              pattern: ^\d{20}$
+            bik:
+              type: string
+              description: БИК банка
+              pattern: ^\d{9}$
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    StaffApplication:
+      type: object
+      properties:
+        id:
+          type: integer
+        userId:
+          type: integer
+        user:
+          $ref: '#/components/schemas/User'
+        desiredRole:
+          type: string
+          enum: [ EMPLOYEE, SUPPLIER, DRIVER ]
+        supplierInfo:
+          type: object
+          description: Дополнительная информация для роли поставщика
+          properties:
+            companyName:
+              type: string
+            contactPerson:
+              type: string
+            inn:
+              type: string
+            ogrn:
+              type: string
+            bankAccount:
+              type: string
+            bik:
+              type: string
+        status:
+          type: string
+          enum: [ PENDING, APPROVED, REJECTED ]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        email:
+          type: string
+          format: email
+        role:
+          type: string
+          enum: [CLIENT, EMPLOYEE, SUPPLIER, ADMIN, DRIVER]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        client:
+          $ref: '#/components/schemas/Client'
+        employee:
+          $ref: '#/components/schemas/Employee'
+        supplier:
+          $ref: '#/components/schemas/Supplier'
+        admin:
+          $ref: '#/components/schemas/Admin'
+
+    Client:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        phone:
+          type: string
+        address:
+          type: string
+
+    AdminCreateRequest:
+      type: object
+      required:
+        - email
+        - password
+        - name
+      properties:
+        email:
+          type: string
+          format: email
+          description: Электронная почта администратора
+        password:
+          type: string
+          description: Пароль администратора
+        name:
+          type: string
+          description: Имя администратора
+        phone:
+          type: string
+          description: Номер телефона администратора
+        address:
+          type: string
+          description: Адрес администратора
+
+    AdminResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: success
+        data:
+          type: object
+          properties:
+            admin:
+              $ref: '#/components/schemas/Admin'
+        message:
+          type: string
+          example: Администратор успешно создан
+
+    StaffCreateRequest:
+      type: object
+      required:
+        - email
+        - password
+        - role
+      properties:
+        email:
+          type: string
+          format: email
+          description: Электронная почта пользователя
+        password:
+          type: string
+          description: Пароль пользователя
+        role:
+          type: string
+          enum: [EMPLOYEE, SUPPLIER]
+          description: Роль пользователя
+        name:
+          type: string
+          description: Имя сотрудника (только для EMPLOYEE)
+        position:
+          type: string
+          description: Должность сотрудника (только для EMPLOYEE)
+        companyName:
+          type: string
+          description: Название компании (только для SUPPLIER)
+        contactPerson:
+          type: string
+          description: Контактное лицо (только для SUPPLIER)
+        phone:
+          type: string
+          description: Номер телефона
+        address:
+          type: string
+          description: Адрес
+        inn:
+          type: string
+          description: ИНН компании (только для SUPPLIER)
+          pattern: ^\d{10}$|^\d{12}$
+        ogrn:
+          type: string
+          description: ОГРН компании (только для SUPPLIER)
+          pattern: ^\d{13}$|^\d{15}$
+        bankAccount:
+          type: string
+          description: Расчетный счет (только для SUPPLIER)
+          pattern: ^\d{20}$
+        bik:
+          type: string
+          description: БИК банка (только для SUPPLIER)
+          pattern: ^\d{9}$
+    EmployeeResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: success
+        data:
+          type: object
+          properties:
+            staff:
+              $ref: '#/components/schemas/Employee'
+        message:
+          type: string
+          example: Сотрудник успешно создан
+
+    SupplierResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: success
+        data:
+          type: object
+          properties:
+            staff:
+              $ref: '#/components/schemas/Supplier'
+        message:
+          type: string
+          example: Поставщик успешно создан
+
+    Tokens:
+      type: object
+      properties:
+        accessToken:
+          type: string
+          description: JWT токен доступа
+        refreshToken:
+          type: string
+          description: JWT токен обновления
+
+    ErrorResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: error
+        message:
+          type: string
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+              message:
+                type: string
+
+    StaffApplicationCreateRequest:
+      type: object
+      required:
+        - desiredRole
+      properties:
+        desiredRole:
+          type: string
+          enum: [EMPLOYEE, SUPPLIER, DRIVER]
+          description: Желаемая роль (EMPLOYEE, SUPPLIER или DRIVER)
+
+    StaffApplicationResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: success
+        data:
+          type: object
+          properties:
+            application:
+              $ref: '#/components/schemas/StaffApplication'
+        message:
+          type: string
+          example: Заявка успешно отправлена
+
+    StaffApplicationApproveResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: success
+        message:
+          type: string
+          example: Заявка одобрена
+        data:
+          type: object
+          properties:
+            user:
+              oneOf:
+                - $ref: '#/components/schemas/Employee'
+                - $ref: '#/components/schemas/Supplier'
+
+    StaffApplicationRejectResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: success
+        message:
+          type: string
+          example: Заявка отклонена
+
+    StaffApplicationListResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: success
+        data:
+          type: object
+          properties:
+            applications:
+              type: array
+              items:
+                $ref: '#/components/schemas/StaffApplication'
+
+    UserCreateRequest:
+      type: object
+      required:
+        - email
+        - password
+        - role
+        - name
+        - phone
+        - address
+      properties:
+        email:
+          type: string
+          format: email
+          description: Электронная почта пользователя
+        password:
+          type: string
+          description: Пароль пользователя
+        role:
+          type: string
+          enum: [CLIENT, EMPLOYEE]
+          description: Роль пользователя
+        name:
+          type: string
+          description: Имя пользователя
+        phone:
+          type: string
+          description: Номер телефона пользователя
+        position:
+          type: string
+          description: Должность пользователя (только для EMPLOYEE)
+
+    UserLoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          description: Электронная почта пользователя
+        password:
+          type: string
+          description: Пароль пользователя
+
+    RefreshTokenRequest:
+      type: object
+      required:
+        - refreshToken
+      properties:
+        refreshToken:
+          type: string
+          description: JWT токен обновления
+
+    LogoutRequest:
+      type: object
+      required:
+        - refreshToken
+      properties:
+        refreshToken:
+          type: string
+          description: JWT токен обновления
+
+    UserProfileUpdateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Имя клиента
+        phone:
+          type: string
+          description: Номер телефона клиента
+        address:
+          type: string
+          description: Адрес клиента
+    Product:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+        price:
+          type: number
+          format: float
+        stockQuantity:
+          type: integer
+        images:
+          type: array
+          items:
+            type: string
+
+    Supply:
+      type: object
+      properties:
+        id:
+          type: integer
+        productId:
+          type: integer
+        supplierId:
+          type: integer
+        quantity:
+          type: integer
+        status:
+          type: string
+          enum: [ PENDING, IN_TRANSIT, DELIVERED, CANCELLED ]
+        deliveryDate:
+          type: string
+          format: date-time
+
+    District:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+
+    Stop:
+      type: object
+      properties:
+        id:
+          type: integer
+        districtId:
+          type: integer
+        address:
+          type: string
+        stopTime:
+          type: string
+          format: date-time
+  responses:
+    UserProfileResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: success
+        data:
+          type: object
+          properties:
+            id:
+              type: integer
+              description: Уникальный идентификатор клиента
+            name:
+              type: string
+              description: Имя клиента
+            phone:
+              type: string
+              description: Номер телефона клиента
+            address:
+              type: string
+              description: Адрес клиента
+            user:
+              $ref: '#/components/schemas/User'
+
+    UnauthorizedError:
+      description: Не авторизован
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    ForbiddenError:
+      description: Нет прав доступа
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    NotFoundError:
+      description: Ресурс не найден
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    ValidationError:
+      description: Ошибка валидации
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    ProductsListResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: success
+        data:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+              name:
+                type: string
+              description:
+                type: string
+              price:
+                type: number
+                format: float
+              stockQuantity:
+                type: integer
+              images:
+                type: array
+                items:
+                  type: string
+              supplier:
+                $ref: '#/components/schemas/Supplier'
+              categories:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                    name:
+                      type: string
+              feedbacks:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                    rating:
+                      type: number
+                    comment:
+                      type: string
+                    client:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                        name:
+                          type: string
+                        email:
+                          type: string
+                    createdAt:
+                      type: string
+                      format: date-time
+
+    SupplierProfileResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: success
+        data:
+          type: object
+          properties:
+            id:
+              type: integer
+            userId:
+              type: integer
+            companyName:
+              type: string
+            contactPerson:
+              type: string
+            phone:
+              type: string
+            address:
+              type: string
+            inn:
+              type: string
+              description: ИНН компании
+            ogrn:
+              type: string
+              description: ОГРН компании
+            bankAccount:
+              type: string
+              description: Расчетный счет
+            bik:
+              type: string
+              description: БИК банка
+            user:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                createdAt:
+                  type: string
+                  format: date-time
+                avatar:
+                  type: string
+                  nullable: true
+            products:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  name:
+                    type: string
+                  price:
+                    type: number
+                    format: float
+                  description:
+                    type: string
+                  stockQuantity:
+                    type: integer
+                  isActive:
+                    type: boolean
+    422:
+      description: Ошибка CSRF токена
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: Недействительный CSRF токен
